@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace NightlyCode.Modules {
 
@@ -36,9 +37,9 @@ namespace NightlyCode.Modules {
         /// <summary>
         /// retrieve a key module from this context
         /// </summary>
-        /// <typeparam name="T">type of <see cref="IKeyModule"/> to retrieve</typeparam>
+        /// <typeparam name="T">type of <see cref="IModule"/> to retrieve</typeparam>
         /// <param name="key">key of module</param>
-        /// <returns><see cref="IKeyModule"/> with the specified key</returns>
+        /// <returns><see cref="IModule"/> with the specified key</returns>
         public T GetModuleByKey<T>(string key)
             where T : class, IModule
         {
@@ -73,12 +74,16 @@ namespace NightlyCode.Modules {
         /// this creates all metainformationen needed for the context for module management
         /// </remarks>
         /// <param name="module">module to add</param>
-        protected internal virtual void AddModule(IModule module) {
+        public void AddModule(IModule module) {
             TMetaInformation information = CreateModuleInformation(module);
             lock(modulelock) {
                 moduletypelookup[module.GetType()] = module;
-                if(module is IKeyModule)
-                    modulekeylookup[((IKeyModule)module).Key] = module;
+
+                // determine whether this module has a key linked to it
+                ModuleKeyAttribute keyattribute = module.GetType().GetCustomAttribute(typeof(ModuleKeyAttribute)) as ModuleKeyAttribute;
+                if(keyattribute != null)
+                    modulekeylookup[keyattribute.Key] = module;
+
                 modules[module] = information;
             }
         }
@@ -90,7 +95,7 @@ namespace NightlyCode.Modules {
         /// <returns>metainformation for the module</returns>
         protected virtual TMetaInformation CreateModuleInformation(IModule module) {
             TMetaInformation metainformation = new TMetaInformation {
-                Key = (module as IKeyModule)?.Key,
+                Key =  module.GetType().GetCustomAttribute<ModuleKeyAttribute>()?.Key,
                 Type = module.GetType().Name,
                 Module = module
             };

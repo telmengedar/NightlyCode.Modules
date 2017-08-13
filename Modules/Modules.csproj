@@ -43,11 +43,11 @@
     <Compile Include="DependencyAttribute.cs" />
     <Compile Include="DependencyType.cs" />
     <Compile Include="IInitializableModule.cs" />
-    <Compile Include="IKeyModule.cs" />
     <Compile Include="IModule.cs" />
     <Compile Include="IRunnableModule.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="ModuleInformation.cs" />
+    <Compile Include="ModuleKeyAttribute.cs" />
     <Compile Include="ModuleManager.cs" />
     <Compile Include="ModuleNotFoundException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
