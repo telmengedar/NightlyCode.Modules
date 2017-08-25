@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NightlyCode.Modules.Logging;
 
 namespace NightlyCode.Modules {
 
@@ -86,6 +87,7 @@ namespace NightlyCode.Modules {
 
                 modules[module] = information;
             }
+            OnModuleAdded(module);
         }
 
         /// <summary>
@@ -237,5 +239,11 @@ namespace NightlyCode.Modules {
                 }
             }
         }
+
+        /// <summary>
+        /// called when a module was added to the <see cref="ModuleManager{TMetaInformation}"/>
+        /// </summary>
+        /// <param name="module">module which was added to the <see cref="ModuleManager{TMetaInformation}"/></param>
+        protected virtual void OnModuleAdded(IModule module) { }
     }
 }
