@@ -192,6 +192,24 @@ namespace NightlyCode.Modules {
         }
 
         /// <summary>
+        /// executes a command on a module
+        /// </summary>
+        /// <remarks>
+        /// first argument has to be the module key, the other arguments are redirected to the module
+        /// </remarks>
+        /// <param name="arguments">arguments for command call</param>
+        public void ExecuteCommand(params string[] arguments) {
+            if(arguments == null || arguments.Length == 0)
+                throw new Exception("Missing command arguments");
+
+            ICommandModule module = GetModuleByKey<ICommandModule>(arguments[0]);
+            if(module == null)
+                throw new Exception($"Module with key '{arguments[0]}' not found");
+
+            module.ProcessCommand(arguments.Skip(1).ToArray());
+        }
+
+        /// <summary>
         /// starts a module
         /// </summary>
         /// <param name="module">module to start</param>

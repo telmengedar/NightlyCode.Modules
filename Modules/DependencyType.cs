@@ -11,7 +11,7 @@
         Type,
 
         /// <summary>
-        /// key of <see cref="IKeyModule"/>
+        /// key of <see cref="IModule"/> if any
         /// </summary>
         Key
     }
