@@ -14,8 +14,18 @@ namespace NightlyCode.Modules {
         readonly object modulelock = new object();
         readonly Dictionary<IModule, TMetaInformation> modules = new Dictionary<IModule, TMetaInformation>();
         readonly Dictionary<string, IModule> modulekeylookup = new Dictionary<string, IModule>();
-        readonly Dictionary<Type, IModule> moduletypelookup = new Dictionary<Type, IModule>(); 
-        
+        readonly Dictionary<Type, IModule> moduletypelookup = new Dictionary<Type, IModule>();
+
+        /// <summary>
+        /// triggered when a module has been started
+        /// </summary>
+        public event Action<IModule> ModuleStarted;
+
+        /// <summary>
+        /// triggered when a module has been stopped
+        /// </summary>
+        public event Action<IModule> ModuleStopped;
+
         /// <summary>
         /// loaded <see cref="IModule"/>s
         /// </summary>
@@ -69,6 +79,15 @@ namespace NightlyCode.Modules {
         }
 
         /// <summary>
+        /// get meta information related to module
+        /// </summary>
+        /// <param name="module">module of which to return meta information</param>
+        /// <returns>meta information of module</returns>
+        public TMetaInformation GetModuleInformation(IModule module) {
+            return modules[module];
+        }
+
+        /// <summary>
         /// adds an <see cref="IModule"/> to the context
         /// </summary>
         /// <remarks>
@@ -104,17 +123,44 @@ namespace NightlyCode.Modules {
             return metainformation;
         }
 
+        void InitializeModule(ModuleInformation module, HashSet<IModule> initialized) {
+            if(initialized.Contains(module.Module))
+                throw new Exception("Module already initialized. There probably is a circular reference somewhere.");
+
+            if(module.IsInitialized)
+                return;
+
+            initialized.Add(module.Module);
+
+            foreach (ModuleInformation dependency in module.Dependencies) {
+                if (dependency.Module == null)
+                    throw new Exception($"Module '{module.Module}' has unmet dependency to '{dependency}'");
+
+                InitializeModule(dependency, initialized);
+            }
+
+            (module.Module as IInitializableModule)?.Initialize();
+            module.SetInitialized(true);
+
+            initialized.Remove(module.Module);
+        }
+
         void InitializeModules()
         {
             Logger.Info(this, "Initializing modules");
-            foreach (TMetaInformation module in modules.Values.Where(m=>!m.IsInitialized))
-            {
+            foreach (TMetaInformation module in modules.Values)
+                FillDependencies(module);
+
+            HashSet<IModule> initialized = new HashSet<IModule>();
+            foreach (TMetaInformation module in modules.Values.Where(m=>!m.IsInitialized)) {
+                if(module.IsInitialized)
+                    continue;
+
+                initialized.Clear();
                 try
                 {
                     Logger.Info(this, $"Initializing '{module.Type}'");
-                    FillDependencies(module);
-                    (module.Module as IInitializableModule)?.Initialize();
-                    module.SetInitialized(true);
+                    InitializeModule(module, initialized);
                 }
                 catch (Exception e)
                 {
@@ -131,7 +177,7 @@ namespace NightlyCode.Modules {
         /// Dependencies are used later for every activation
         /// </remarks>
         void FillDependencies(TMetaInformation module) {
-            DependencyAttribute[] dependencies = Attribute.GetCustomAttributes(module.Module.GetType()) as DependencyAttribute[];
+            DependencyAttribute[] dependencies = Attribute.GetCustomAttributes(module.Module.GetType(), typeof(DependencyAttribute)) as DependencyAttribute[];
             if(dependencies == null)
                 return;
 
@@ -139,11 +185,15 @@ namespace NightlyCode.Modules {
                 switch(dependency.Type) {
                     case DependencyType.Key:
                         IModule keymodule = GetModuleByKey<IModule>(dependency.Dependency);
-                        module.AddDependency(keymodule == null ? new ModuleInformation(dependency.Dependency, "", null) : modules[keymodule]);
+                        ModuleInformation keyinformation = keymodule == null ? new ModuleInformation(dependency.Dependency, "", null) : modules[keymodule];
+                        module.AddDependency(keyinformation);
+                        keyinformation?.AddBackDependency(module);
                         break;
                     case DependencyType.Type:
                         IModule typemodule = modules.Values.Where(m => m.Type == dependency.Dependency).Select(m => m.Module).FirstOrDefault();
-                        module.AddDependency(typemodule == null ? new ModuleInformation("", dependency.Dependency, null) : modules[typemodule]);
+                        ModuleInformation typeinformation = typemodule == null ? new ModuleInformation("", dependency.Dependency, null) : modules[typemodule];
+                        module.AddDependency(typeinformation);
+                        typeinformation?.AddBackDependency(module);
                         break;
                     default:
                         throw new Exception("Invalid dependency type");
@@ -162,14 +212,13 @@ namespace NightlyCode.Modules {
                         if (module.IsRunning)
                             continue;
 
-                        Logger.Info(this, $"Activating '{module.Type}'");
                         try
                         {
                             StartModule(module);
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
-                            Logger.Error(this, "Unable to activate module", e);
+                            Logger.Warning(this, "Unable to activate module");
                         }
                     }
                     else
@@ -182,9 +231,9 @@ namespace NightlyCode.Modules {
                         {
                             StopModule(module);
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
-                            Logger.Error(this, "Unable to stop module", e);
+                            Logger.Warning(this, "Unable to stop module");
                         }
                     }
                 }
@@ -213,20 +262,48 @@ namespace NightlyCode.Modules {
         /// starts a module
         /// </summary>
         /// <param name="module">module to start</param>
-        protected virtual void StartModule(ModuleInformation module)
-        {
-            (module.Module as IRunnableModule)?.Start();
-            module.SetRunning(true);
+        protected virtual void StartModule(ModuleInformation module) {
+            if(module.IsRunning)
+                return;
+
+            foreach(ModuleInformation dependency in module.Dependencies)
+                StartModule(dependency);
+
+            Logger.Info(this, $"Activating '{module.Type}'");
+            try {
+                (module.Module as IRunnableModule)?.Start();
+                module.SetRunning(true);
+            }
+            catch (Exception e) {
+                Logger.Error(this, $"Unable to start '{module.Type}'", e);
+                throw;
+            }
+
+            ModuleStarted?.Invoke(module.Module);
         }
 
         /// <summary>
         /// stops the module
         /// </summary>
         /// <param name="module">module to stop</param>
-        protected virtual void StopModule(ModuleInformation module)
-        {
-            (module.Module as IRunnableModule)?.Stop();
-            module.SetRunning(false);
+        protected virtual void StopModule(ModuleInformation module) {
+            if(!module.IsRunning)
+                return;
+
+            foreach(ModuleInformation backdependency in module.BackDependencies)
+                StopModule(backdependency);
+
+            Logger.Info(this, $"Stopping '{module.Type}'");
+            try {
+                (module.Module as IRunnableModule)?.Stop();
+                module.SetRunning(false);
+            }
+            catch (Exception e) {
+                Logger.Error(this, $"Unable to stop '{module.Type}'", e);
+                throw;
+            }
+
+            ModuleStopped?.Invoke(module.Module);
         }
 
         /// <summary>
@@ -243,17 +320,12 @@ namespace NightlyCode.Modules {
         public void Stop() {
             foreach (TMetaInformation module in modules.Values)
             {
-                Logger.Info(this, $"Stopping '{module.Type}'");
                 try
                 {
-                    if (module.IsRunning)
-                    {
-                        StopModule(module);
-                    }
+                    StopModule(module);
                 }
-                catch (Exception e)
-                {
-                    Logger.Error(this, $"Unable to stop '{module.Type}'", e);
+                catch (Exception) {
+                    Logger.Warning(this, $"Unable to stop '{module.Type}', trying to continue work");
                 }
             }
         }

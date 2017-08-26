@@ -8,7 +8,8 @@ namespace NightlyCode.Modules {
     /// </summary>
     public class ModuleInformation {
         readonly List<ModuleInformation> dependencies = new List<ModuleInformation>();
-        
+        readonly List<ModuleInformation> backdependencies=new List<ModuleInformation>();
+         
         /// <summary>
         /// creates new <see cref="ModuleInformation"/>
         /// </summary> 
@@ -25,6 +26,10 @@ namespace NightlyCode.Modules {
             Key = key;
             Type = type;
             Module = module;
+        }
+
+        internal void AddBackDependency(ModuleInformation module) {
+            backdependencies.Add(module);
         }
 
         internal void AddDependency(ModuleInformation module) {
@@ -62,6 +67,14 @@ namespace NightlyCode.Modules {
         public IEnumerable<ModuleInformation> Dependencies => dependencies;
 
         /// <summary>
+        /// modules depending on this <see cref="IModule"/>
+        /// </summary>
+        /// <remarks>
+        /// TODO: find a more suiting name
+        /// </remarks>
+        public IEnumerable<ModuleInformation> BackDependencies => backdependencies;
+         
+        /// <summary>
         /// determines whether the module is initialized
         /// </summary>
         public bool IsInitialized { get; protected set; }
@@ -76,7 +89,20 @@ namespace NightlyCode.Modules {
         /// </summary>
         public virtual bool IsActivatable
         {
-            get { return Module != null && IsInitialized && Dependencies.All(d => d.IsRunning && d.IsActivatable); }
+            get { return Module != null && IsInitialized && Dependencies.All(d => d.IsActivatable); }
+        }
+
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>
+        /// A string that represents the current object.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override string ToString() {
+            if(string.IsNullOrEmpty(Type))
+                return Key;
+            return Type;
         }
     }
 }
