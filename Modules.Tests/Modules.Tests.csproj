@@ -53,10 +53,12 @@
     <Compile Include="Modules\CircularModule3.cs" />
     <Compile Include="Modules\CircularModule2.cs" />
     <Compile Include="Modules\CircularModule1.cs" />
+    <Compile Include="Modules\CrashingStartModule.cs" />
     <Compile Include="Modules\DependendModule3.cs" />
     <Compile Include="Modules\DependendModule2.cs" />
     <Compile Include="Modules\DependendModule1.cs" />
     <Compile Include="Modules\DependendModule4.cs" />
+    <Compile Include="Modules\DependendOnCrashModule.cs" />
     <Compile Include="Modules\ModuleWithUnmetDependency.cs" />
     <Compile Include="ModuleManagerTests.cs" />
     <Compile Include="Modules\SimpleModule.cs" />

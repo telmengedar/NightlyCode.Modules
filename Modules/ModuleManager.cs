@@ -127,7 +127,7 @@ namespace NightlyCode.Modules {
             if(initialized.Contains(module.Module))
                 throw new Exception("Module already initialized. There probably is a circular reference somewhere.");
 
-            if(module.IsInitialized)
+            if(module.Status>=ModuleStatus.Initialized)
                 return;
 
             initialized.Add(module.Module);
@@ -140,7 +140,7 @@ namespace NightlyCode.Modules {
             }
 
             (module.Module as IInitializableModule)?.Initialize();
-            module.SetInitialized(true);
+            module.Status=ModuleStatus.Initialized;
 
             initialized.Remove(module.Module);
         }
@@ -152,8 +152,8 @@ namespace NightlyCode.Modules {
                 FillDependencies(module);
 
             HashSet<IModule> initialized = new HashSet<IModule>();
-            foreach (TMetaInformation module in modules.Values.Where(m=>!m.IsInitialized)) {
-                if(module.IsInitialized)
+            foreach (TMetaInformation module in modules.Values) {
+                if(module.Status>=ModuleStatus.Initialized)
                     continue;
 
                 initialized.Clear();
@@ -165,6 +165,7 @@ namespace NightlyCode.Modules {
                 catch (Exception e)
                 {
                     Logger.Error(this, $"Unable to initialize '{module.Type}'", e);
+                    module.Status = ModuleStatus.ErrorInitializing;
                 }
             }
         }
@@ -209,7 +210,7 @@ namespace NightlyCode.Modules {
                 {
                     if (module.IsActivatable)
                     {
-                        if (module.IsRunning)
+                        if (module.Status>=ModuleStatus.Started)
                             continue;
 
                         try
@@ -223,7 +224,7 @@ namespace NightlyCode.Modules {
                     }
                     else
                     {
-                        if (!module.IsRunning)
+                        if (module.Status<ModuleStatus.Started)
                             continue;
 
                         Logger.Info(this, $"Stopping '{module.Type}'");
@@ -259,11 +260,29 @@ namespace NightlyCode.Modules {
         }
 
         /// <summary>
+        /// starts a module manually
+        /// </summary>
+        /// <typeparam name="T">type of module</typeparam>
+        public void StartModule<T>()
+            where T : class, IModule {
+            StartModule(modules[GetModule<T>()]);
+        }
+
+        /// <summary>
+        /// stops a module manually
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public void StopModule<T>()
+            where T : class, IModule {
+            StopModule(modules[GetModule<T>()]);
+        }
+
+        /// <summary>
         /// starts a module
         /// </summary>
         /// <param name="module">module to start</param>
         protected virtual void StartModule(ModuleInformation module) {
-            if(module.IsRunning)
+            if(module.Status>=ModuleStatus.Started)
                 return;
 
             foreach(ModuleInformation dependency in module.Dependencies)
@@ -272,14 +291,20 @@ namespace NightlyCode.Modules {
             Logger.Info(this, $"Activating '{module.Type}'");
             try {
                 (module.Module as IRunnableModule)?.Start();
-                module.SetRunning(true);
+                module.Status=ModuleStatus.Started;
             }
             catch (Exception e) {
                 Logger.Error(this, $"Unable to start '{module.Type}'", e);
+                module.Status=ModuleStatus.ErrorStarting;
                 throw;
             }
 
-            ModuleStarted?.Invoke(module.Module);
+            try {
+                ModuleStarted?.Invoke(module.Module);
+            }
+            catch(Exception e) {
+                Logger.Error(this, $"Error triggering {nameof(ModuleStopped)} event", e);
+            }
         }
 
         /// <summary>
@@ -287,7 +312,7 @@ namespace NightlyCode.Modules {
         /// </summary>
         /// <param name="module">module to stop</param>
         protected virtual void StopModule(ModuleInformation module) {
-            if(!module.IsRunning)
+            if(module.Status<ModuleStatus.Started)
                 return;
 
             foreach(ModuleInformation backdependency in module.BackDependencies)
@@ -296,14 +321,20 @@ namespace NightlyCode.Modules {
             Logger.Info(this, $"Stopping '{module.Type}'");
             try {
                 (module.Module as IRunnableModule)?.Stop();
-                module.SetRunning(false);
+                module.Status = ModuleStatus.Stopped;
             }
             catch (Exception e) {
                 Logger.Error(this, $"Unable to stop '{module.Type}'", e);
                 throw;
             }
 
-            ModuleStopped?.Invoke(module.Module);
+            try {
+                ModuleStopped?.Invoke(module.Module);
+            }
+            catch(Exception e) {
+                Logger.Error(this, $"Error triggering {nameof(ModuleStopped)} event", e);
+            }
+            
         }
 
         /// <summary>

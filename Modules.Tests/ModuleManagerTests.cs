@@ -16,8 +16,7 @@ namespace Modules.Tests
             modulemanager.AddModule(new ModuleWithUnmetDependency());
             modulemanager.Start();
 
-            Assert.AreEqual(false, modulemanager.GetInformation(modulemanager.GetModule<ModuleWithUnmetDependency>()).IsInitialized);
-            Assert.AreEqual(false, modulemanager.GetInformation(modulemanager.GetModule<ModuleWithUnmetDependency>()).IsRunning);
+            Assert.AreEqual(ModuleStatus.ErrorInitializing, modulemanager.GetInformation(modulemanager.GetModule<ModuleWithUnmetDependency>()).Status);
         }
 
         [TestMethod]
@@ -28,12 +27,9 @@ namespace Modules.Tests
             modulemanager.AddModule(new CircularModule3());
             modulemanager.Start();
 
-            Assert.AreEqual(false, modulemanager.GetInformation(modulemanager.GetModule<CircularModule1>()).IsInitialized);
-            Assert.AreEqual(false, modulemanager.GetInformation(modulemanager.GetModule<CircularModule1>()).IsRunning);
-            Assert.AreEqual(false, modulemanager.GetInformation(modulemanager.GetModule<CircularModule2>()).IsInitialized);
-            Assert.AreEqual(false, modulemanager.GetInformation(modulemanager.GetModule<CircularModule2>()).IsRunning);
-            Assert.AreEqual(false, modulemanager.GetInformation(modulemanager.GetModule<CircularModule3>()).IsInitialized);
-            Assert.AreEqual(false, modulemanager.GetInformation(modulemanager.GetModule<CircularModule3>()).IsRunning);
+            Assert.AreEqual(ModuleStatus.ErrorInitializing, modulemanager.GetInformation(modulemanager.GetModule<CircularModule1>()).Status);
+            Assert.AreEqual(ModuleStatus.ErrorInitializing, modulemanager.GetInformation(modulemanager.GetModule<CircularModule2>()).Status);
+            Assert.AreEqual(ModuleStatus.ErrorInitializing, modulemanager.GetInformation(modulemanager.GetModule<CircularModule3>()).Status);
         }
 
         [TestMethod]
@@ -42,8 +38,7 @@ namespace Modules.Tests
             modulemanager.AddModule(new SimpleModule());
             modulemanager.Start();
 
-            Assert.AreEqual(true, modulemanager.GetInformation(modulemanager.GetModule<SimpleModule>()).IsInitialized);
-            Assert.AreEqual(true, modulemanager.GetInformation(modulemanager.GetModule<SimpleModule>()).IsRunning);
+            Assert.AreEqual(ModuleStatus.Started, modulemanager.GetInformation(modulemanager.GetModule<SimpleModule>()).Status);
         }
 
         [TestMethod]
@@ -76,12 +71,50 @@ namespace Modules.Tests
             modulemanager.AddModule(new DependendModule3());
             modulemanager.Start();
 
-            Assert.AreEqual(true, modulemanager.GetInformation(modulemanager.GetModule<DependendModule1>()).IsInitialized);
-            Assert.AreEqual(true, modulemanager.GetInformation(modulemanager.GetModule<DependendModule1>()).IsRunning);
-            Assert.AreEqual(true, modulemanager.GetInformation(modulemanager.GetModule<DependendModule3>()).IsInitialized);
-            Assert.AreEqual(true, modulemanager.GetInformation(modulemanager.GetModule<DependendModule3>()).IsRunning);
-            Assert.AreEqual(true, modulemanager.GetInformation(modulemanager.GetModule<DependendModule4>()).IsInitialized);
-            Assert.AreEqual(true, modulemanager.GetInformation(modulemanager.GetModule<DependendModule4>()).IsRunning);
+            Assert.AreEqual(ModuleStatus.Started, modulemanager.GetInformation(modulemanager.GetModule<DependendModule1>()).Status);
+            Assert.AreEqual(ModuleStatus.Started, modulemanager.GetInformation(modulemanager.GetModule<DependendModule3>()).Status);
+            Assert.AreEqual(ModuleStatus.Started, modulemanager.GetInformation(modulemanager.GetModule<DependendModule4>()).Status);
+        }
+
+        [TestMethod]
+        public void CrashingStartModule() {
+            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            modulemanager.AddModule(new CrashingStartModule());
+            modulemanager.Start();
+
+            Assert.AreEqual(ModuleStatus.ErrorStarting, modulemanager.GetInformation(modulemanager.GetModule<CrashingStartModule>()).Status);
+        }
+
+        [TestMethod]
+        public void CrashingStartCancelsAllDependendStarts()
+        {
+            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            modulemanager.AddModule(new CrashingStartModule());
+            modulemanager.AddModule(new DependendOnCrashModule());
+            modulemanager.Start();
+
+            Assert.AreEqual(ModuleStatus.ErrorStarting, modulemanager.GetInformation(modulemanager.GetModule<CrashingStartModule>()).Status);
+            Assert.AreEqual(ModuleStatus.Initialized, modulemanager.GetInformation(modulemanager.GetModule<DependendOnCrashModule>()).Status);
+        }
+
+        [TestMethod]
+        public void StoppingModuleStopsDependendModules() {
+            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            modulemanager.AddModule(new DependendModule1());
+            modulemanager.AddModule(new DependendModule2());
+            modulemanager.AddModule(new DependendModule3());
+            modulemanager.Start();
+
+
+            Assert.AreEqual(ModuleStatus.Started, modulemanager.GetInformation(modulemanager.GetModule<DependendModule1>()).Status);
+            Assert.AreEqual(ModuleStatus.Started, modulemanager.GetInformation(modulemanager.GetModule<DependendModule2>()).Status);
+            Assert.AreEqual(ModuleStatus.Started, modulemanager.GetInformation(modulemanager.GetModule<DependendModule3>()).Status);
+
+            modulemanager.StopModule<DependendModule3>();
+
+            Assert.AreEqual(ModuleStatus.Stopped, modulemanager.GetInformation(modulemanager.GetModule<DependendModule1>()).Status);
+            Assert.AreEqual(ModuleStatus.Stopped, modulemanager.GetInformation(modulemanager.GetModule<DependendModule2>()).Status);
+            Assert.AreEqual(ModuleStatus.Stopped, modulemanager.GetInformation(modulemanager.GetModule<DependendModule3>()).Status);
         }
     }
 }

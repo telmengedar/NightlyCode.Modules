@@ -55,6 +55,7 @@
     <Compile Include="ModuleKeyAttribute.cs" />
     <Compile Include="ModuleManager.cs" />
     <Compile Include="ModuleNotFoundException.cs" />
+    <Compile Include="ModuleStatus.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -36,16 +36,6 @@ namespace NightlyCode.Modules {
             dependencies.Add(module);
         }
 
-        internal void SetInitialized(bool value)
-        {
-            IsInitialized = value;
-        }
-
-        internal void SetRunning(bool value)
-        {
-            IsRunning = value;
-        }
-
         /// <summary>
         /// module key (if any)
         /// </summary>
@@ -75,21 +65,16 @@ namespace NightlyCode.Modules {
         public IEnumerable<ModuleInformation> BackDependencies => backdependencies;
          
         /// <summary>
-        /// determines whether the module is initialized
+        /// status of module
         /// </summary>
-        public bool IsInitialized { get; protected set; }
-
-        /// <summary>
-        /// determines whether the module is running
-        /// </summary>
-        public bool IsRunning { get; protected set; }
+        public ModuleStatus Status { get; internal set; }
 
         /// <summary>
         /// determines whether the module can get activated
         /// </summary>
         public virtual bool IsActivatable
         {
-            get { return Module != null && IsInitialized && Dependencies.All(d => d.IsActivatable); }
+            get { return Module != null && Status>=ModuleStatus.Initialized && Dependencies.All(d => d.IsActivatable); }
         }
 
         /// <summary>
