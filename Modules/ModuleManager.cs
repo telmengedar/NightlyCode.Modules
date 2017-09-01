@@ -340,7 +340,7 @@ namespace NightlyCode.Modules {
         /// <summary>
         /// start all managed modules
         /// </summary>
-        public void Start() {
+        public virtual void Start() {
             InitializeModules();
             RecheckModuleState();
         }
@@ -348,7 +348,7 @@ namespace NightlyCode.Modules {
         /// <summary>
         /// stop all managed modules
         /// </summary>
-        public void Stop() {
+        public virtual void Stop() {
             foreach (TMetaInformation module in modules.Values)
             {
                 try
