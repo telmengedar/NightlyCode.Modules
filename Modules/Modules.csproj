@@ -51,12 +51,14 @@
     <Compile Include="ICommandModule.cs" />
     <Compile Include="IInitializableModule.cs" />
     <Compile Include="IModule.cs" />
+    <Compile Include="IModuleContext.cs" />
     <Compile Include="IRunnableModule.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="ModuleInformation.cs" />
     <Compile Include="ModuleKeyAttribute.cs" />
     <Compile Include="ModuleManager.cs" />
     <Compile Include="ModuleNotFoundException.cs" />
+    <Compile Include="ModuleScanner.cs" />
     <Compile Include="ModuleStatus.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

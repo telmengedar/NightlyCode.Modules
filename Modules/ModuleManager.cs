@@ -9,7 +9,7 @@ namespace NightlyCode.Modules {
     /// <summary>
     /// manages <see cref="IModule"/>s, provides access to them
     /// </summary>
-    public class ModuleManager<TMetaInformation>
+    public class ModuleManager<TMetaInformation> : IModuleContext
         where TMetaInformation : ModuleInformation, new() {
         readonly object modulelock = new object();
         readonly Dictionary<IModule, TMetaInformation> modules = new Dictionary<IModule, TMetaInformation>();
@@ -247,16 +247,15 @@ namespace NightlyCode.Modules {
         /// <remarks>
         /// first argument has to be the module key, the other arguments are redirected to the module
         /// </remarks>
+        /// <param name="modulekey">module which should execute the command</param>
+        /// <param name="command">command to execute</param>
         /// <param name="arguments">arguments for command call</param>
-        public void ExecuteCommand(params string[] arguments) {
-            if(arguments == null || arguments.Length == 0)
-                throw new Exception("Missing command arguments");
-
-            ICommandModule module = GetModuleByKey<ICommandModule>(arguments[0]);
+        public void ExecuteCommand(string modulekey, string command, params string[] arguments) {
+            ICommandModule module = GetModuleByKey<ICommandModule>(modulekey);
             if(module == null)
-                throw new Exception($"Module with key '{arguments[0]}' not found");
+                throw new Exception($"Module with key '{modulekey}' not found");
 
-            module.ProcessCommand(arguments.Skip(1).ToArray());
+            module.ProcessCommand(command, arguments);
         }
 
         /// <summary>
