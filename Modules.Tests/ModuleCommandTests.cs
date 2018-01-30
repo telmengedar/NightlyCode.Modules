@@ -43,6 +43,18 @@ namespace Modules.Tests {
         }
 
         [TestMethod]
+        public void SetEnumProperty()
+        {
+            TestCallModule module = new TestCallModule();
+            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            modulemanager.AddModule(module);
+            modulemanager.Start();
+
+            modulemanager.ExecuteCommand("testcall.testenum=primary");
+            Assert.AreEqual(TestEnum.Primary, module.TestEnum);
+        }
+
+        [TestMethod]
         public void TestMethod()
         {
             TestCallModule module = new TestCallModule();

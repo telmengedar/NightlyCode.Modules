@@ -25,5 +25,7 @@ namespace Modules.Tests.Modules {
         public int TestInt { get; set; }
 
         public double TestDouble { get; set; }
+
+        public TestEnum TestEnum { get; set; }
     }
 }

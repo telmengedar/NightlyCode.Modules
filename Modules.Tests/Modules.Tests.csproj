@@ -67,6 +67,7 @@
     <Compile Include="ModuleManagerTests.cs" />
     <Compile Include="Modules\SimpleModule.cs" />
     <Compile Include="Modules\TestCallModule.cs" />
+    <Compile Include="Modules\TestEnum.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
