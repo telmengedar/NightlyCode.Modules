@@ -46,6 +46,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandParser.cs" />
+    <Compile Include="Commands\CommandParsingException.cs" />
+    <Compile Include="Commands\CommandType.cs" />
+    <Compile Include="Commands\ModuleCommand.cs" />
+    <Compile Include="Commands\ModuleCommandException.cs" />
     <Compile Include="DependencyAttribute.cs" />
     <Compile Include="DependencyType.cs" />
     <Compile Include="ICommandModule.cs" />

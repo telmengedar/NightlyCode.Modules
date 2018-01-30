@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NightlyCode.Core.Conversion;
+using NightlyCode.Modules.Commands;
 using NightlyCode.Modules.Logging;
 
 namespace NightlyCode.Modules {
@@ -256,6 +258,39 @@ namespace NightlyCode.Modules {
                 throw new Exception($"Module with key '{modulekey}' not found");
 
             module.ProcessCommand(command, arguments);
+        }
+
+        /// <summary>
+        /// executes a command for a module
+        /// </summary>
+        /// <param name="commandstring">string which defines the command</param>
+        public void ExecuteCommand(string commandstring) {
+            ModuleCommand command = new CommandParser().ParseCommand(commandstring);
+
+            IModule module = GetModuleByKey<IModule>(command.Module);
+            switch(command.Type) {
+                case CommandType.Property:
+                    PropertyInfo property=module.GetType().GetProperties().First(p => p.Name.ToLower() == command.Endpoint.ToLower());
+                    property.SetValue(module, Converter.Convert(command.Arguments[0], property.PropertyType));
+                    break;
+                case CommandType.Method:
+                    MethodInfo[] methods = module.GetType().GetMethods().Where(m => m.Name.ToLower() == command.Endpoint.ToLower() && m.GetParameters().Length == command.Arguments.Length).ToArray();
+                    foreach(MethodInfo method in methods) {
+                        try {
+                            int index = 0;
+                            ParameterInfo[] parameter = method.GetParameters();
+                            method.Invoke(module, command.Arguments.Select(c => {
+                                object value = Converter.Convert(command.Arguments[index], parameter[index].ParameterType);
+                                ++index;
+                                return value;
+                            }).ToArray());
+                            return;
+                        }
+                        catch(Exception) {
+                        }
+                    }
+                    throw new ModuleCommandException("No matching method found to call");
+            }
         }
 
         /// <summary>

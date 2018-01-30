@@ -35,6 +35,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NightlyCode.Core">
+      <HintPath>..\..\..\Compiled\Library\NightlyCode.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <Choose>
@@ -50,6 +53,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="ModuleCommandTests.cs" />
     <Compile Include="Modules\CircularModule3.cs" />
     <Compile Include="Modules\CircularModule2.cs" />
     <Compile Include="Modules\CircularModule1.cs" />
@@ -62,6 +66,7 @@
     <Compile Include="Modules\ModuleWithUnmetDependency.cs" />
     <Compile Include="ModuleManagerTests.cs" />
     <Compile Include="Modules\SimpleModule.cs" />
+    <Compile Include="Modules\TestCallModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
