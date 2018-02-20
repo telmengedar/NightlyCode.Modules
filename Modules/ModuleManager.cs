@@ -256,9 +256,6 @@ namespace NightlyCode.Modules {
         /// <param name="arguments">arguments for command call</param>
         public void ExecuteCommand(string modulekey, string command, params string[] arguments) {
             ICommandModule module = GetModuleByKey<ICommandModule>(modulekey);
-            if(module == null)
-                throw new Exception($"Module with key '{modulekey}' not found");
-
             module.ProcessCommand(command, arguments);
         }
 
