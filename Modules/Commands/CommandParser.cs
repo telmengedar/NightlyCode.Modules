@@ -60,6 +60,9 @@ namespace NightlyCode.Modules.Commands {
                 ++index;
             }
 
+            if(command.Type == CommandType.None)
+                return null;
+
             return command;
         }
     }

@@ -18,6 +18,8 @@ namespace NightlyCode.Modules {
         readonly Dictionary<string, IModule> modulekeylookup = new Dictionary<string, IModule>();
         readonly Dictionary<Type, IModule> moduletypelookup = new Dictionary<Type, IModule>();
 
+        readonly CommandParser parser = new CommandParser();
+
         /// <summary>
         /// triggered when a module has been started
         /// </summary>
@@ -264,15 +266,17 @@ namespace NightlyCode.Modules {
         /// executes a command for a module
         /// </summary>
         /// <param name="commandstring">string which defines the command</param>
-        public void ExecuteCommand(string commandstring) {
-            ModuleCommand command = new CommandParser().ParseCommand(commandstring);
+        public bool ExecuteCommand(string commandstring) {
+            ModuleCommand command = parser.ParseCommand(commandstring);
+            if(command.Type == CommandType.None)
+                return false;
 
             IModule module = GetModuleByKey<IModule>(command.Module);
             switch(command.Type) {
                 case CommandType.Property:
                     PropertyInfo property=module.GetType().GetProperties().First(p => p.Name.ToLower() == command.Endpoint.ToLower());
                     property.SetValue(module, Converter.Convert(command.Arguments[0], property.PropertyType));
-                    break;
+                    return true;
                 case CommandType.Method:
                     MethodInfo[] methods = module.GetType().GetMethods().Where(m => m.Name.ToLower() == command.Endpoint.ToLower() && m.GetParameters().Length == command.Arguments.Length).ToArray();
                     foreach(MethodInfo method in methods) {
@@ -284,12 +288,14 @@ namespace NightlyCode.Modules {
                                 ++index;
                                 return value;
                             }).ToArray());
-                            return;
+                            return true;
                         }
                         catch(Exception) {
                         }
                     }
                     throw new ModuleCommandException("No matching method found to call");
+                default:
+                    throw new ModuleCommandException($"Unknown command type '{command.Type}'");
             }
         }
 
