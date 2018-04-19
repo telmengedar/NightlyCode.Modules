@@ -1,9 +1,9 @@
-﻿namespace NightlyCode.Modules {
+﻿namespace NightlyCode.Modules.Dependencies {
 
     /// <summary>
     /// type of dependency specification
     /// </summary>
-    public enum DependencyType {
+    public enum SpecifierType {
 
         /// <summary>
         /// type name

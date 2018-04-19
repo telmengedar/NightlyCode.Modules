@@ -51,8 +51,9 @@
     <Compile Include="Commands\CommandType.cs" />
     <Compile Include="Commands\ModuleCommand.cs" />
     <Compile Include="Commands\ModuleCommandException.cs" />
-    <Compile Include="DependencyAttribute.cs" />
-    <Compile Include="DependencyType.cs" />
+    <Compile Include="Dependencies\DependencyAttribute.cs" />
+    <Compile Include="Dependencies\DependencyType.cs" />
+    <Compile Include="Dependencies\SpecifierType.cs" />
     <Compile Include="ICommandModule.cs" />
     <Compile Include="IInitializableModule.cs" />
     <Compile Include="IModule.cs" />

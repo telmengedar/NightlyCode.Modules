@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using NightlyCode.Core.Conversion;
 using NightlyCode.Modules.Commands;
+using NightlyCode.Modules.Dependencies;
 using NightlyCode.Modules.Logging;
 
 namespace NightlyCode.Modules {
@@ -187,18 +188,30 @@ namespace NightlyCode.Modules {
                 return;
 
             foreach(DependencyAttribute dependency in dependencies) {
-                switch(dependency.Type) {
-                    case DependencyType.Key:
-                        IModule keymodule = GetModuleByKey<IModule>(dependency.Dependency);
-                        ModuleInformation keyinformation = keymodule == null ? new ModuleInformation(dependency.Dependency, "", null) : modules[keymodule];
-                        module.AddDependency(keyinformation);
-                        keyinformation?.AddBackDependency(module);
+                IModule dependencymodule;
+                ModuleInformation dependencyinformation;
+
+                switch(dependency.SpecifierType) {
+                    case SpecifierType.Key:
+                        dependencymodule = GetModuleByKey<IModule>(dependency.Module);
+                        dependencyinformation = dependencymodule == null ? new ModuleInformation(dependency.Module, "", null) : modules[dependencymodule];
                         break;
-                    case DependencyType.Type:
-                        IModule typemodule = modules.Values.Where(m => m.Type == dependency.Dependency).Select(m => m.Module).FirstOrDefault();
-                        ModuleInformation typeinformation = typemodule == null ? new ModuleInformation("", dependency.Dependency, null) : modules[typemodule];
-                        module.AddDependency(typeinformation);
-                        typeinformation?.AddBackDependency(module);
+                    case SpecifierType.Type:
+                        dependencymodule = modules.Values.Where(m => m.Type == dependency.Module).Select(m => m.Module).FirstOrDefault();
+                        dependencyinformation = dependencymodule == null ? new ModuleInformation("", dependency.Module, null) : modules[dependencymodule];
+                        break;
+                    default:
+                        throw new Exception("Invalid specifier type");
+                }
+
+                switch(dependency.DependencyType) {
+                    case DependencyType.InitializeAfter:
+                        module.AddDependency(dependencyinformation);
+                        dependencyinformation?.AddBackDependency(module);
+                        break;
+                    case DependencyType.InitializeBefore:
+                        dependencyinformation?.AddDependency(module);
+                        module.AddBackDependency(dependencyinformation);
                         break;
                     default:
                         throw new Exception("Invalid dependency type");
@@ -280,7 +293,7 @@ namespace NightlyCode.Modules {
                         try {
                             int index = 0;
                             ParameterInfo[] parameter = method.GetParameters();
-                            method.Invoke(module, command.Arguments.Select(c => {
+                             method.Invoke(module, command.Arguments.Select(c => {
                                 object value = Converter.Convert(command.Arguments[index], parameter[index].ParameterType);
                                 ++index;
                                 return value;
