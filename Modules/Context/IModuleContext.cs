@@ -1,9 +1,18 @@
-﻿namespace NightlyCode.Modules {
+﻿namespace NightlyCode.Modules.Context {
 
     /// <summary>
     /// interface for a module context
     /// </summary>
     public interface IModuleContext {
+
+        /// <summary>
+        /// adds an <see cref="IModule"/> to the context
+        /// </summary>
+        /// <remarks>
+        /// this creates all metainformation needed for the context for module management
+        /// </remarks>
+        /// <param name="module">module to add</param>
+        void AddModule(IModule module);
 
         /// <summary>
         /// retrieve a key module from this context
@@ -27,5 +36,16 @@
         /// <param name="command">command to execute</param>
         /// <param name="arguments">command arguments</param>
         void ExecuteCommand(string module, string command, params string[] arguments);
+
+        /// <summary>
+        /// start all managed modules
+        /// </summary>
+        void Start();
+
+        /// <summary>
+        /// stop all managed modules
+        /// </summary>
+        void Stop();
+
     }
 }

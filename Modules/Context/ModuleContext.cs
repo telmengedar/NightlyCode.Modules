@@ -7,15 +7,18 @@ using NightlyCode.Modules.Commands;
 using NightlyCode.Modules.Dependencies;
 using NightlyCode.Modules.Logging;
 
-namespace NightlyCode.Modules {
+namespace NightlyCode.Modules.Context
+{
 
     /// <summary>
     /// manages <see cref="IModule"/>s, provides access to them
     /// </summary>
-    public class ModuleManager<TMetaInformation> : IModuleContext
+    public class ModuleContext<TMetaInformation> : IModuleContext
         where TMetaInformation : ModuleInformation, new() {
+
         readonly object modulelock = new object();
         readonly Dictionary<IModule, TMetaInformation> modules = new Dictionary<IModule, TMetaInformation>();
+
         readonly Dictionary<string, IModule> modulekeylookup = new Dictionary<string, IModule>();
         readonly Dictionary<Type, IModule> moduletypelookup = new Dictionary<Type, IModule>();
 
@@ -300,7 +303,7 @@ namespace NightlyCode.Modules {
                             }).ToArray());
                             return true;
                         }
-                        catch(Exception) {
+                        catch(Exception e) {
                         }
                     }
                     throw new ModuleCommandException("No matching method found to call");
@@ -412,9 +415,9 @@ namespace NightlyCode.Modules {
         }
 
         /// <summary>
-        /// called when a module was added to the <see cref="ModuleManager{TMetaInformation}"/>
+        /// called when a module was added to the <see cref="ModuleContext{TMetaInformation}"/>
         /// </summary>
-        /// <param name="module">module which was added to the <see cref="ModuleManager{TMetaInformation}"/></param>
+        /// <param name="module">module which was added to the <see cref="ModuleContext{TMetaInformation}"/></param>
         protected virtual void OnModuleAdded(IModule module) { }
     }
 }

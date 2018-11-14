@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Modules.Tests.Modules;
 using NightlyCode.Modules;
+using NightlyCode.Modules.Context;
 
 namespace Modules.Tests {
 
@@ -10,7 +11,7 @@ namespace Modules.Tests {
         [TestMethod]
         public void SetStringProperty() {
             TestCallModule module=new TestCallModule();
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(module);
             modulemanager.Start();
 
@@ -22,7 +23,7 @@ namespace Modules.Tests {
         public void SetIntProperty()
         {
             TestCallModule module = new TestCallModule();
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(module);
             modulemanager.Start();
 
@@ -34,7 +35,7 @@ namespace Modules.Tests {
         public void SetDoubleProperty()
         {
             TestCallModule module = new TestCallModule();
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(module);
             modulemanager.Start();
 
@@ -46,7 +47,7 @@ namespace Modules.Tests {
         public void SetEnumProperty()
         {
             TestCallModule module = new TestCallModule();
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(module);
             modulemanager.Start();
 
@@ -58,7 +59,7 @@ namespace Modules.Tests {
         public void TestMethod()
         {
             TestCallModule module = new TestCallModule();
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(module);
             modulemanager.Start();
 
@@ -70,7 +71,7 @@ namespace Modules.Tests {
         public void TestMethodWithAnArgument()
         {
             TestCallModule module = new TestCallModule();
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(module);
             modulemanager.Start();
 
@@ -82,7 +83,7 @@ namespace Modules.Tests {
         public void TestMethodWith3Arguments()
         {
             TestCallModule module = new TestCallModule();
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(module);
             modulemanager.Start();
 

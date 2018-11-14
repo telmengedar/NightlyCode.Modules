@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Modules.Tests.Modules;
 using NightlyCode.Modules;
+using NightlyCode.Modules.Context;
 
 namespace Modules.Tests
 {
@@ -12,7 +13,7 @@ namespace Modules.Tests
 
         [TestMethod]
         public void ModuleWithUnmetDependencyIsntInitialized() {
-            ModuleManager<ModuleInformation> modulemanager=new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager=new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(new ModuleWithUnmetDependency());
             modulemanager.Start();
 
@@ -21,7 +22,7 @@ namespace Modules.Tests
 
         [TestMethod]
         public void CircularReferencedModulesAreNotInitialized() {
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(new CircularModule1());
             modulemanager.AddModule(new CircularModule2());
             modulemanager.AddModule(new CircularModule3());
@@ -34,7 +35,7 @@ namespace Modules.Tests
 
         [TestMethod]
         public void StartASimpleModule() {
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(new SimpleModule());
             modulemanager.Start();
 
@@ -51,7 +52,7 @@ namespace Modules.Tests
 
             List<Type> actualorder=new List<Type>();
 
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(new DependendModule1());
             modulemanager.AddModule(new DependendModule2());
             modulemanager.AddModule(new DependendModule3());
@@ -65,7 +66,7 @@ namespace Modules.Tests
 
         [TestMethod]
         public void TwoModuleDependOnOneOther() {
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(new DependendModule4());
             modulemanager.AddModule(new DependendModule1());
             modulemanager.AddModule(new DependendModule3());
@@ -78,7 +79,7 @@ namespace Modules.Tests
 
         [TestMethod]
         public void CrashingStartModule() {
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(new CrashingStartModule());
             modulemanager.Start();
 
@@ -88,7 +89,7 @@ namespace Modules.Tests
         [TestMethod]
         public void CrashingStartCancelsAllDependendStarts()
         {
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(new CrashingStartModule());
             modulemanager.AddModule(new DependendOnCrashModule());
             modulemanager.Start();
@@ -99,7 +100,7 @@ namespace Modules.Tests
 
         [TestMethod]
         public void StoppingModuleStopsDependendModules() {
-            ModuleManager<ModuleInformation> modulemanager = new ModuleManager<ModuleInformation>();
+            ModuleContext<ModuleInformation> modulemanager = new ModuleContext<ModuleInformation>();
             modulemanager.AddModule(new DependendModule1());
             modulemanager.AddModule(new DependendModule2());
             modulemanager.AddModule(new DependendModule3());
