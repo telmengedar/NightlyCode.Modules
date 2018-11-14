@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using NightlyCode.Core.Conversion;
 using NightlyCode.Modules.Commands;
-using NightlyCode.Modules.Dependencies;
 using NightlyCode.Modules.Logging;
 
 namespace NightlyCode.Modules {
@@ -115,97 +114,6 @@ namespace NightlyCode.Modules {
                 IsInitializable = moduletype.GetInterface(nameof(IInitializableModule)) != null
             };
             return metainformation;
-        }
-
-        void InitializeModule(ModuleInformation module, HashSet<IModule> initialized) {
-            if(initialized.Contains(module.Module))
-                throw new Exception("Module already initialized. There probably is a circular reference somewhere.");
-
-            if(module.Status>=ModuleStatus.Initialized)
-                return;
-
-            initialized.Add(module.Module);
-
-            foreach (ModuleInformation dependency in module.Dependencies) {
-                if (dependency.Module == null)
-                    throw new Exception($"Module '{module.Module}' has unmet dependency to '{dependency}'");
-
-                InitializeModule(dependency, initialized);
-            }
-
-            (module.Module as IInitializableModule)?.Initialize();
-            module.Status=ModuleStatus.Initialized;
-
-            initialized.Remove(module.Module);
-        }
-
-        void InitializeModules()
-        {
-            Logger.Info(this, "Initializing modules");
-            foreach (TMetaInformation module in modules.Values)
-                FillDependencies(module);
-
-            HashSet<IModule> initialized = new HashSet<IModule>();
-            foreach (TMetaInformation module in modules.Values) {
-                if(module.Status>=ModuleStatus.Initialized)
-                    continue;
-
-                initialized.Clear();
-                try
-                {
-                    Logger.Info(this, $"Initializing '{module.Type}'");
-                    InitializeModule(module, initialized);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(this, $"Unable to initialize '{module.Type}'", e);
-                    module.Status = ModuleStatus.ErrorInitializing;
-                }
-            }
-        }
-
-        /// <summary>
-        /// fills dependencies of all modules
-        /// </summary>
-        /// <remarks>
-        /// this is done after all modules have been added and before module initialization.
-        /// Dependencies are used later for every activation
-        /// </remarks>
-        void FillDependencies(TMetaInformation module) {
-            DependencyAttribute[] dependencies = Attribute.GetCustomAttributes(module.Module.GetType(), typeof(DependencyAttribute)) as DependencyAttribute[];
-            if(dependencies == null)
-                return;
-
-            foreach(DependencyAttribute dependency in dependencies) {
-                IModule dependencymodule;
-                ModuleInformation dependencyinformation;
-
-                switch(dependency.SpecifierType) {
-                    case SpecifierType.Key:
-                        dependencymodule = GetModuleByKey<IModule>(dependency.Module);
-                        dependencyinformation = dependencymodule == null ? new ModuleInformation(dependency.Module, "", null) : modules[dependencymodule];
-                        break;
-                    case SpecifierType.Type:
-                        dependencymodule = modules.Values.Where(m => m.Type == dependency.Module).Select(m => m.Module).FirstOrDefault();
-                        dependencyinformation = dependencymodule == null ? new ModuleInformation("", dependency.Module, null) : modules[dependencymodule];
-                        break;
-                    default:
-                        throw new Exception("Invalid specifier type");
-                }
-
-                switch(dependency.DependencyType) {
-                    case DependencyType.InitializeAfter:
-                        module.AddDependency(dependencyinformation);
-                        dependencyinformation?.AddBackDependency(module);
-                        break;
-                    case DependencyType.InitializeBefore:
-                        dependencyinformation?.AddDependency(module);
-                        module.AddBackDependency(dependencyinformation);
-                        break;
-                    default:
-                        throw new Exception("Invalid dependency type");
-                }
-            }
         }
 
         internal void RecheckModuleState()
