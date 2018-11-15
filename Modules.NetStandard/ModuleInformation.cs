@@ -1,28 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace NightlyCode.Modules {
 
     /// <summary>
-    /// runtime information about an <see cref="IModule"/>
+    /// runtime information about an modules
     /// </summary>
     public class ModuleInformation {
          
-        /// <summary>
-        /// creates new <see cref="ModuleInformation"/>
-        /// </summary> 
-        public ModuleInformation() { }
-
         /// <summary>
         /// creates new <see cref="ModuleInformation"/>
         /// </summary>
         /// <param name="type">type name of module</param>
         public ModuleInformation(Type type) {
             Type = type;
-            if (Attribute.IsDefined(type, typeof(ModuleKeyAttribute)))
-                Key = ((ModuleKeyAttribute) Attribute.GetCustomAttribute(type, typeof(ModuleKeyAttribute))).Key;
-            IsInitializable = Type.GetInterface(nameof(IInitializableModule)) != null;
+            if (Attribute.IsDefined(type, typeof(ModuleAttribute)))
+                Key = ((ModuleAttribute) Attribute.GetCustomAttribute(type, typeof(ModuleAttribute))).Key;
         }
 
         public Type Type { get; internal set; }
@@ -36,16 +28,6 @@ namespace NightlyCode.Modules {
         /// name of module type
         /// </summary>
         public string TypeName => Type.Name;
-
-        /// <summary>
-        /// determines whether the module is initializable
-        /// </summary>
-        public bool IsInitializable { get; internal set; }
-
-        /// <summary>
-        /// status of module
-        /// </summary>
-        public ModuleStatus Status { get; internal set; }
 
         /// <summary>
         /// Returns a string that represents the current object.

@@ -27,7 +27,7 @@ namespace NightlyCode.Modules {
         /// <param name="context">context used to initialize module</param>
         /// <param name="predicate">predicate used to check whether to include module in scan result (optional)</param>
         /// <returns></returns>
-        public IEnumerable<IModule> ScanForModules(IModuleContext context, Func<Type, bool> predicate=null) {
+        public IEnumerable<Type> ScanForModules(IModuleContext context, Func<Type, bool> predicate=null) {
             Logger.Info(this, $"Scanning '{path}' for modules");
 
             if(!Directory.Exists(path)) {
@@ -51,21 +51,8 @@ namespace NightlyCode.Modules {
                     continue;
                 }
 
-                foreach(Type type in types) {
-                    if(type.IsInterface || type.GetInterfaces().All(i => i != typeof(IModule)) || !predicate(type))
-                        continue;
-
-                    IModule module;
-                    try {
-                        module = (IModule)Activator.CreateInstance(type, context);
-                    }
-                    catch(Exception e) {
-                        Logger.Warning(this, $"Unable to create '{type.FullName}'", e.Message);
-                        continue;
-                    }
-
-                    yield return module;
-                }
+                foreach(Type type in types.Where(t=>Attribute.IsDefined(t, typeof(ModuleAttribute))))
+                    yield return type;
             }
 
             AppDomain.CurrentDomain.AssemblyResolve -= OnAssemblyResolve;

@@ -1,9 +1,9 @@
 ﻿namespace NightlyCode.Modules {
 
     /// <summary>
-    /// interface for an <see cref="IModule"/> able to process commands
+    /// interface for a module able to process commands
     /// </summary>
-    public interface ICommandModule : IModule {
+    public interface ICommandModule {
 
         /// <summary>
         /// processes a command

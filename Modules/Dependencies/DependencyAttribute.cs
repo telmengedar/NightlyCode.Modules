@@ -1,7 +1,6 @@
 ﻿using System;
-using NightlyCode.Modules.Dependencies;
 
-namespace NightlyCode.Modules {
+namespace NightlyCode.Modules.Dependencies {
 
     /// <summary>
     /// attribute used to specify a dependency to a <see cref="IModule"/>

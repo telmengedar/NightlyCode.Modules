@@ -4,49 +4,40 @@ using System.Linq;
 using System.Reflection;
 using NightlyCode.Core.Conversion;
 using NightlyCode.Modules.Commands;
-using NightlyCode.Modules.Logging;
 
 namespace NightlyCode.Modules {
 
     /// <summary>
-    /// manages <see cref="IModule"/>s, provides access to them
+    /// manages modules, provides access to them
     /// </summary>
-    public class ModuleContext<TMetaInformation> : IModuleContext
-        where TMetaInformation : ModuleInformation, new() {
+    public class ModuleContext : IModuleContext {
         readonly object modulelock = new object();
-        readonly Dictionary<Type, TMetaInformation> modules = new Dictionary<Type, TMetaInformation>();
-        readonly Dictionary<string, IModule> modulekeylookup = new Dictionary<string, IModule>();
+        readonly Dictionary<Type, ModuleInformation> modules = new Dictionary<Type, ModuleInformation>();
+        readonly Dictionary<string, ModuleInformation> modulekeylookup = new Dictionary<string, ModuleInformation>();
 
         readonly CommandParser parser = new CommandParser();
         readonly ModuleProvider provider = new ModuleProvider();
 
+        /// <summary>
+        /// creates a new <see cref="ModuleContext"/>
+        /// </summary>
         public ModuleContext() {
             provider.Add(GetType());
         }
 
         /// <summary>
-        /// triggered when a module has been started
+        /// loaded modules
         /// </summary>
-        public event Action<IModule> ModuleStarted;
-
-        /// <summary>
-        /// triggered when a module has been stopped
-        /// </summary>
-        public event Action<IModule> ModuleStopped;
-
-        /// <summary>
-        /// loaded <see cref="IModule"/>s
-        /// </summary>
-        public IEnumerable<TMetaInformation> Modules => modules.Values;
+        public IEnumerable<ModuleInformation> Modules => modules.Values;
 
         /// <summary>
         /// get meta information of a module
         /// </summary>
         /// <param name="moduletype">module of which to get information</param>
         /// <returns>module information</returns>
-        public TMetaInformation GetInformation(Type moduletype) {
+        public ModuleInformation GetInformation(Type moduletype) {
             lock(modulelock) {
-                if(!modules.TryGetValue(moduletype, out TMetaInformation information))
+                if(!modules.TryGetValue(moduletype, out ModuleInformation information))
                     throw new ModuleNotFoundException("Module is not registered to the module manager");
                 return information;
             }
@@ -55,16 +46,15 @@ namespace NightlyCode.Modules {
         /// <summary>
         /// retrieve a key module from this context
         /// </summary>
-        /// <typeparam name="T">type of <see cref="IModule"/> to retrieve</typeparam>
+        /// <typeparam name="T">type of module to retrieve</typeparam>
         /// <param name="key">key of module</param>
-        /// <returns><see cref="IModule"/> with the specified key</returns>
+        /// <returns>module with the specified key</returns>
         public T GetModuleByKey<T>(string key)
-            where T : class, IModule
         {
             lock(modulelock) {
-                if(!modulekeylookup.TryGetValue(key, out IModule module))
+                if(!modulekeylookup.TryGetValue(key, out ModuleInformation module))
                     throw new ModuleNotFoundException($"Module with key '{key}' was not found");
-                return (T)module;
+                return (T)provider.Get(module.Type);
             }
         }
 
@@ -73,8 +63,7 @@ namespace NightlyCode.Modules {
         /// </summary>
         /// <typeparam name="T">type of module</typeparam>
         /// <returns>module if found</returns>
-        public T GetModule<T>()
-            where T : class, IModule {
+        public T GetModule<T>() {
             return (T) provider.Get<T>();
         }
 
@@ -83,12 +72,12 @@ namespace NightlyCode.Modules {
         /// </summary>
         /// <param name="moduletype">module of which to return meta information</param>
         /// <returns>meta information of module</returns>
-        public TMetaInformation GetModuleInformation(Type moduletype) {
+        public ModuleInformation GetModuleInformation(Type moduletype) {
             return modules[moduletype];
         }
 
         /// <summary>
-        /// adds an <see cref="IModule"/> to the context
+        /// adds an module to the context
         /// </summary>
         /// <remarks>
         /// this creates all metainformationen needed for the context for module management
@@ -96,63 +85,14 @@ namespace NightlyCode.Modules {
         /// <param name="moduletype">module to add</param>
         public void AddModule(Type moduletype) {
             provider.Add(moduletype);
-            TMetaInformation information = CreateModuleInformation(moduletype);
-            lock(modulelock)
+            ModuleInformation information = new ModuleInformation(moduletype);
+            lock(modulelock) {
                 modules[moduletype] = information;
-            OnModuleAdded(moduletype);
-        }
-
-        /// <summary>
-        /// creates meta information for the specified module
-        /// </summary>
-        /// <param name="moduletype">module for which to create meta information</param>
-        /// <returns>metainformation for the module</returns>
-        protected virtual TMetaInformation CreateModuleInformation(Type moduletype) {
-            TMetaInformation metainformation = new TMetaInformation {
-                Type = moduletype,
-                Key = moduletype.GetCustomAttribute<ModuleKeyAttribute>()?.Key,
-                IsInitializable = moduletype.GetInterface(nameof(IInitializableModule)) != null
-            };
-            return metainformation;
-        }
-
-        internal void RecheckModuleState()
-        {
-            lock (modulelock)
-            {
-                foreach (TMetaInformation module in modules.Values)
-                {
-                    if (module.IsActivatable)
-                    {
-                        if (module.Status>=ModuleStatus.Started)
-                            continue;
-
-                        try
-                        {
-                            StartModule(module);
-                        }
-                        catch (Exception)
-                        {
-                            Logger.Warning(this, "Unable to activate module");
-                        }
-                    }
-                    else
-                    {
-                        if (module.Status<ModuleStatus.Started)
-                            continue;
-
-                        Logger.Info(this, $"Stopping '{module.Type}'");
-                        try
-                        {
-                            StopModule(module);
-                        }
-                        catch (Exception)
-                        {
-                            Logger.Warning(this, "Unable to stop module");
-                        }
-                    }
-                }
+                if(!string.IsNullOrEmpty(information.Key))
+                    modulekeylookup[information.Key] = information;
             }
+
+            OnModuleAdded(moduletype);
         }
 
         /// <summary>
@@ -178,7 +118,7 @@ namespace NightlyCode.Modules {
             if(command.Type == CommandType.None)
                 return false;
 
-            IModule module = GetModuleByKey<IModule>(command.Module);
+            object module = GetModuleByKey<object>(command.Module);
             switch(command.Type) {
                 case CommandType.Property:
                     PropertyInfo property=module.GetType().GetProperties().First(p => p.Name.ToLower() == command.Endpoint.ToLower());
@@ -207,111 +147,25 @@ namespace NightlyCode.Modules {
         }
 
         /// <summary>
-        /// starts a module manually
-        /// </summary>
-        /// <typeparam name="T">type of module</typeparam>
-        public void StartModule<T>()
-            where T : class, IModule {
-            StartModule(modules[GetModule<T>()]);
-        }
-
-        /// <summary>
-        /// stops a module manually
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        public void StopModule<T>()
-            where T : class, IModule {
-            StopModule(modules[GetModule<T>()]);
-        }
-
-        /// <summary>
-        /// starts a module
-        /// </summary>
-        /// <param name="module">module to start</param>
-        protected virtual void StartModule(ModuleInformation module) {
-            if(module.Status>=ModuleStatus.Started)
-                return;
-
-            foreach(ModuleInformation dependency in module.Dependencies)
-                StartModule(dependency);
-
-            Logger.Info(this, $"Activating '{module.Type}'");
-            try {
-                (module.Module as IRunnableModule)?.Start();
-                module.Status=ModuleStatus.Started;
-            }
-            catch (Exception e) {
-                Logger.Error(this, $"Unable to start '{module.Type}'", e);
-                module.Status=ModuleStatus.ErrorStarting;
-                throw;
-            }
-
-            try {
-                ModuleStarted?.Invoke(module.Module);
-            }
-            catch(Exception e) {
-                Logger.Error(this, $"Error triggering {nameof(ModuleStopped)} event", e);
-            }
-        }
-
-        /// <summary>
-        /// stops the module
-        /// </summary>
-        /// <param name="module">module to stop</param>
-        protected virtual void StopModule(ModuleInformation module) {
-            if(module.Status<ModuleStatus.Started)
-                return;
-
-            foreach(ModuleInformation backdependency in module.BackDependencies)
-                StopModule(backdependency);
-
-            Logger.Info(this, $"Stopping '{module.Type}'");
-            try {
-                (module.Module as IRunnableModule)?.Stop();
-                module.Status = ModuleStatus.Stopped;
-            }
-            catch (Exception e) {
-                Logger.Error(this, $"Unable to stop '{module.Type}'", e);
-                throw;
-            }
-
-            try {
-                ModuleStopped?.Invoke(module.Module);
-            }
-            catch(Exception e) {
-                Logger.Error(this, $"Error triggering {nameof(ModuleStopped)} event", e);
-            }
-            
-        }
-
-        /// <summary>
-        /// start all managed modules
+        /// starts the module manager and autocreates all marked modules
         /// </summary>
         public virtual void Start() {
-            InitializeModules();
-            RecheckModuleState();
+            foreach(ModuleInformation moduleinformation in Modules.Where(i => (Attribute.GetCustomAttribute(i.Type, typeof(ModuleAttribute)) as ModuleAttribute)?.AutoCreate ?? false))
+                provider.Get(moduleinformation.Type);
         }
 
         /// <summary>
         /// stop all managed modules
         /// </summary>
         public virtual void Stop() {
-            foreach (TMetaInformation module in modules.Values)
-            {
-                try
-                {
-                    StopModule(module);
-                }
-                catch (Exception) {
-                    Logger.Warning(this, $"Unable to stop '{module.Type}', trying to continue work");
-                }
-            }
+            foreach(IDisposable disposable in provider.Instances.OfType<IDisposable>())
+                disposable.Dispose();
         }
 
         /// <summary>
-        /// called when a module was added to the <see cref="ModuleContext{TMetaInformation}"/>
+        /// called when a module was added to the <see cref="ModuleContext"/>
         /// </summary>
-        /// <param name="moduletype">module which was added to the <see cref="ModuleContext{TMetaInformation}"/></param>
+        /// <param name="moduletype">module which was added to the <see cref="ModuleContext"/></param>
         protected virtual void OnModuleAdded(Type moduletype) { }
     }
 }

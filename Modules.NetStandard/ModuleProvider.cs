@@ -15,6 +15,19 @@ namespace NightlyCode.Modules {
         readonly object instancelock = new object();
 
         /// <summary>
+        /// enumeration of all created instances
+        /// </summary>
+        public IEnumerable<object> Instances
+        {
+            get
+            {
+                lock(instancelock)
+                    foreach(object instance in instances.Values)
+                        yield return instance;
+            }
+        }
+
+        /// <summary>
         /// adds a type to available implementations
         /// </summary>
         /// <param name="type">type to add</param>

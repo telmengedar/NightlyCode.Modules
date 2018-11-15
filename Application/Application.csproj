@@ -4,15 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{B72E0501-AAAA-4513-891C-2E31BA4055E4}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{AE2A7DD1-F82D-4E36-A564-D72F62A9ED29}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NightlyCode.Modules</RootNamespace>
-    <AssemblyName>NightlyCode.Modules</AssemblyName>
+    <RootNamespace>NightlyCode.Modules.Application</RootNamespace>
+    <AssemblyName>Application</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -20,24 +22,24 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\NightlyCode.Modules.XML</DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\NightlyCode.Modules.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NightlyCode.Core">
       <HintPath>..\..\..\Compiled\Library\NightlyCode.Core.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,39 +48,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\CommandParser.cs" />
-    <Compile Include="Commands\CommandParsingException.cs" />
-    <Compile Include="Commands\CommandType.cs" />
-    <Compile Include="Commands\ModuleCommand.cs" />
-    <Compile Include="Commands\ModuleCommandException.cs" />
-    <Compile Include="Context\IInterceptor.cs" />
-    <Compile Include="Context\ModuleInterceptor.cs" />
-    <Compile Include="Context\Proxy.cs" />
-    <Compile Include="Dependencies\DependencyAttribute.cs" />
-    <Compile Include="Dependencies\DependencyType.cs" />
-    <Compile Include="Dependencies\SpecifierType.cs" />
-    <Compile Include="ICommandModule.cs" />
-    <Compile Include="IInitializableModule.cs" />
-    <Compile Include="IModule.cs" />
-    <Compile Include="Context\IModuleContext.cs" />
-    <Compile Include="IPC\IPCContext.cs" />
-    <Compile Include="IPC\IPCMessage.cs" />
-    <Compile Include="IPC\IPCModule.cs" />
-    <Compile Include="IRunnableModule.cs" />
-    <Compile Include="Logging\Logger.cs" />
-    <Compile Include="ModuleInformation.cs" />
-    <Compile Include="ModuleKeyAttribute.cs" />
-    <Compile Include="Context\ModuleContext.cs" />
-    <Compile Include="ModuleNotFoundException.cs" />
-    <Compile Include="ModuleScanner.cs" />
-    <Compile Include="ModuleStatus.cs" />
-    <Compile Include="Platforms\IPlatformModule.cs" />
-    <Compile Include="Platforms\ModulePlatform.cs" />
-    <Compile Include="Platforms\PlatformAttribute.cs" />
+    <Compile Include="ModuleService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Scripts\ContextScriptHost.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Modules\Modules.csproj">
+      <Project>{b72e0501-aaaa-4513-891c-2e31ba4055e4}</Project>
+      <Name>Modules</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -87,8 +71,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DevDir)\Compiled\Library\" />
-    <Copy SourceFiles="$(DocumentationFile)" DestinationFolder="$(DevDir)\Compiled\Library\" />
-  </Target>
 </Project>
