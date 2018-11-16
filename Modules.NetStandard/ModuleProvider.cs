@@ -39,7 +39,7 @@ namespace NightlyCode.Modules {
             Type basetype = type.BaseType;
             while (basetype != null && basetype != typeof(object)) {
                 implementations[basetype] = type;
-                basetype = type.BaseType;
+                basetype = basetype.BaseType;
             }
         }
 
