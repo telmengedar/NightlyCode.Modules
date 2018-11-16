@@ -28,19 +28,57 @@ namespace NightlyCode.Modules {
         }
 
         /// <summary>
+        /// determines whether module provider has created an instance for the specified type
+        /// </summary>
+        /// <typeparam name="T">type to check</typeparam>
+        /// <returns>true if provider contains an instance for the specified type, false otherwise</returns>
+        public bool HasInstance<T>() {
+            return HasInstance(typeof(T));
+        }
+
+        /// <summary>
+        /// determines whether module provider has created an instance for the specified type
+        /// </summary>
+        /// <param name="type">type to check</param>
+        /// <returns>true if provider contains an instance for the specified type, false otherwise</returns>
+        public bool HasInstance(Type type) {
+            lock (instancelock)
+                return instances.ContainsKey(type);
+        }
+
+        void AddType(Type requesttype, Type instancetype, object instance = null) {
+            implementations[requesttype] = instancetype;
+            if (instance != null)
+                lock(instancelock)
+                    instances[requesttype] = instance;
+        }
+
+        void TraverseTypes(Type type, object instance = null) {
+            foreach (Type interfacetype in type.GetInterfaces())
+                AddType(interfacetype, type, instance);
+
+            Type basetype = type;
+            while (basetype != null && basetype != typeof(object))
+            {
+                AddType(basetype, type, instance);
+                basetype = basetype.BaseType;
+            }
+        }
+
+        /// <summary>
+        /// adds an instance to the module provider
+        /// </summary>
+        /// <param name="instance">instance to add</param>
+        public void AddInstance(object instance) {
+            TraverseTypes(instance.GetType(), instance);
+        }
+
+        /// <summary>
         /// adds a type to available implementations
         /// </summary>
         /// <param name="type">type to add</param>
         public void Add(Type type) {
-            
-            foreach (Type interfacetype in type.GetInterfaces())
-                implementations[interfacetype] = type;
-
-            Type basetype = type.BaseType;
-            while (basetype != null && basetype != typeof(object)) {
-                implementations[basetype] = type;
-                basetype = basetype.BaseType;
-            }
+            TraverseTypes(type);
         }
 
         /// <summary>
@@ -98,7 +136,15 @@ namespace NightlyCode.Modules {
             history.Add(type);
             ConstructorInfo constructor = type.GetConstructors().First();
             object[] parameters = CreateParameters(constructor.GetParameters(), history).ToArray();
-            return constructor.Invoke(parameters);
+            try {
+                return constructor.Invoke(parameters);
+            }
+            catch (TargetInvocationException e) {
+                if (e.InnerException != null)
+                    throw e.InnerException;
+                throw;
+            }
+            
         }
     }
 }

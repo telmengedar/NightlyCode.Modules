@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using NightlyCode.Core.Conversion;
 using NightlyCode.Modules.Commands;
+using NightlyCode.Modules.Logging;
 
 namespace NightlyCode.Modules {
 
@@ -22,7 +23,25 @@ namespace NightlyCode.Modules {
         /// creates a new <see cref="ModuleContext"/>
         /// </summary>
         public ModuleContext() {
-            provider.Add(GetType());
+            provider.AddInstance(this);
+        }
+
+        /// <summary>
+        /// determines whether the specified module has been instantiated
+        /// </summary>
+        /// <typeparam name="T">type of module to check for</typeparam>
+        /// <returns>true if module was instantiated, false otherwise</returns>
+        public bool IsStarted<T>() {
+            return IsStarted(typeof(T));
+        }
+
+        /// <summary>
+        /// determines whether the specified module has been instantiated
+        /// </summary>
+        /// <param name="type">type of module to check for</param>
+        /// <returns>true if module was instantiated, false otherwise</returns>
+        public bool IsStarted(Type type) {
+            return provider.HasInstance(type);
         }
 
         /// <summary>
@@ -74,6 +93,14 @@ namespace NightlyCode.Modules {
         /// <returns>meta information of module</returns>
         public ModuleInformation GetModuleInformation(Type moduletype) {
             return modules[moduletype];
+        }
+
+        /// <summary>
+        /// adds an module to the context
+        /// </summary>
+        /// <typeparam name="T">type of module to add</typeparam>
+        public void AddModule<T>() {
+            AddModule(typeof(T));
         }
 
         /// <summary>
@@ -151,7 +178,12 @@ namespace NightlyCode.Modules {
         /// </summary>
         public virtual void Start() {
             foreach(ModuleInformation moduleinformation in Modules.Where(i => (Attribute.GetCustomAttribute(i.Type, typeof(ModuleAttribute)) as ModuleAttribute)?.AutoCreate ?? false))
-                provider.Get(moduleinformation.Type);
+                try {
+                    provider.Get(moduleinformation.Type);
+                }
+                catch (Exception e) {
+                    Logger.Error(this, $"Unable to start '{moduleinformation.TypeName}'", e);
+                }
         }
 
         /// <summary>

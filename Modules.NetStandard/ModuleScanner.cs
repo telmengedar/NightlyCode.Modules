@@ -36,7 +36,7 @@ namespace NightlyCode.Modules {
             }
 
             if(predicate == null)
-                predicate = type => true;
+                predicate = type => Attribute.IsDefined(type, typeof(ModuleAttribute));
 
             AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
@@ -51,7 +51,7 @@ namespace NightlyCode.Modules {
                     continue;
                 }
 
-                foreach(Type type in types.Where(t=>Attribute.IsDefined(t, typeof(ModuleAttribute))))
+                foreach (Type type in types.Where(predicate))
                     yield return type;
             }
 
