@@ -10,9 +10,19 @@ namespace NightlyCode.Modules {
     /// provides instances of modules when they are requested
     /// </summary>
     public class ModuleProvider {
+        readonly IModuleContext context;
+
         readonly Dictionary<Type, Type> implementations = new Dictionary<Type, Type>();
         readonly Dictionary<Type, object> instances = new Dictionary<Type, object>();
         readonly object instancelock = new object();
+
+        /// <summary>
+        /// creates a new <see cref="ModuleProvider"/>
+        /// </summary>
+        /// <param name="context">access to module context</param>
+        public ModuleProvider(IModuleContext context) {
+            this.context = context;
+        }
 
         /// <summary>
         /// enumeration of all created instances
@@ -134,17 +144,28 @@ namespace NightlyCode.Modules {
 
         object CreateInstance(Type type, HashSet<Type> history) {
             history.Add(type);
-            ConstructorInfo constructor = type.GetConstructors().First();
+
+            ModuleInformation information = context.GetModuleInformation(type);
+            if (information.Provider != null)
+                return information.Provider(this);
+
+            ConstructorInfo constructor;
+            try {
+                constructor = type.GetConstructors().First();
+            }
+            catch (Exception e) {
+                throw new ModuleCreateException($"Unable find any constructor for '{type.Name}'", type, e);
+            }
+                
             object[] parameters = CreateParameters(constructor.GetParameters(), history).ToArray();
             try {
                 return constructor.Invoke(parameters);
             }
             catch (TargetInvocationException e) {
                 if (e.InnerException != null)
-                    throw e.InnerException;
-                throw;
+                    throw new ModuleCreateException($"Unable to invoke constructor for '{type.Name}", type, e.InnerException);
+                throw new ModuleCreateException($"Unable to invoke constructor for '{type.Name}", type, e);
             }
-            
         }
     }
 }

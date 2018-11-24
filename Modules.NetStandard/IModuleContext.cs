@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace NightlyCode.Modules {
 
@@ -28,11 +29,34 @@ namespace NightlyCode.Modules {
         T GetModule<T>();
 
         /// <summary>
+        /// get meta information about module
+        /// </summary>
+        /// <returns>module meta information</returns>
+        ModuleInformation GetModuleInformation(Type moduletype);
+
+        /// <summary>
         /// executes a module command
         /// </summary>
         /// <param name="module">module which should execute the command</param>
         /// <param name="command">command to execute</param>
         /// <param name="arguments">command arguments</param>
         void ExecuteCommand(string module, string command, params string[] arguments);
+
+        /// <summary>
+        /// adds an module to the context
+        /// </summary>
+        /// <remarks>
+        /// this creates all metainformationen needed for the context for module management
+        /// </remarks>
+        /// <param name="moduletype">module to add</param>
+        /// <param name="instanceprovider">custom provider of module instance</param>
+        void AddModule(Type moduletype, Func<ModuleProvider, object> instanceprovider=null);
+
+        /// <summary>
+        /// get module from context
+        /// </summary>
+        /// <param name="type">type of module</param>
+        /// <returns>module if found</returns>
+        object GetModule(Type type);
     }
 }

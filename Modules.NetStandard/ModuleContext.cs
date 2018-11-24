@@ -17,12 +17,13 @@ namespace NightlyCode.Modules {
         readonly Dictionary<string, ModuleInformation> modulekeylookup = new Dictionary<string, ModuleInformation>();
 
         readonly CommandParser parser = new CommandParser();
-        readonly ModuleProvider provider = new ModuleProvider();
+        readonly ModuleProvider provider;
 
         /// <summary>
         /// creates a new <see cref="ModuleContext"/>
         /// </summary>
         public ModuleContext() {
+            provider = new ModuleProvider(this);
             provider.AddInstance(this);
         }
 
@@ -47,7 +48,13 @@ namespace NightlyCode.Modules {
         /// <summary>
         /// loaded modules
         /// </summary>
-        public IEnumerable<ModuleInformation> Modules => modules.Values;
+        public IEnumerable<ModuleInformation> Modules {
+            get {
+                lock(modulelock)
+                    foreach (ModuleInformation module in modules.Values)
+                        yield return module;
+            }
+        }
 
         /// <summary>
         /// get meta information of a module
@@ -80,6 +87,15 @@ namespace NightlyCode.Modules {
         /// <summary>
         /// get module from context
         /// </summary>
+        /// <param name="type">type of module</param>
+        /// <returns>module if found</returns>
+        public object GetModule(Type type) {
+            return provider.Get(type);
+        }
+
+        /// <summary>
+        /// get module from context
+        /// </summary>
         /// <typeparam name="T">type of module</typeparam>
         /// <returns>module if found</returns>
         public T GetModule<T>() {
@@ -92,7 +108,10 @@ namespace NightlyCode.Modules {
         /// <param name="moduletype">module of which to return meta information</param>
         /// <returns>meta information of module</returns>
         public ModuleInformation GetModuleInformation(Type moduletype) {
-            return modules[moduletype];
+            lock (modulelock) {
+                modules.TryGetValue(moduletype, out ModuleInformation info);
+                return info;
+            }
         }
 
         /// <summary>
@@ -110,9 +129,13 @@ namespace NightlyCode.Modules {
         /// this creates all metainformationen needed for the context for module management
         /// </remarks>
         /// <param name="moduletype">module to add</param>
-        public void AddModule(Type moduletype) {
+        /// <param name="instanceprovider">custom provider of module instance</param>
+        public void AddModule(Type moduletype, Func<ModuleProvider, object> instanceprovider=null) {
             provider.Add(moduletype);
-            ModuleInformation information = new ModuleInformation(moduletype);
+            ModuleInformation information = new ModuleInformation(moduletype) {
+                Provider = instanceprovider
+            };
+
             lock(modulelock) {
                 modules[moduletype] = information;
                 if(!string.IsNullOrEmpty(information.Key))
@@ -177,7 +200,7 @@ namespace NightlyCode.Modules {
         /// starts the module manager and autocreates all marked modules
         /// </summary>
         public virtual void Start() {
-            foreach(ModuleInformation moduleinformation in Modules.Where(i => (Attribute.GetCustomAttribute(i.Type, typeof(ModuleAttribute)) as ModuleAttribute)?.AutoCreate ?? false))
+            foreach(ModuleInformation moduleinformation in Modules.Where(i => (Attribute.GetCustomAttribute(i.Type, typeof(ModuleAttribute)) as ModuleAttribute)?.AutoCreate ?? false).ToArray())
                 try {
                     provider.Get(moduleinformation.Type);
                 }

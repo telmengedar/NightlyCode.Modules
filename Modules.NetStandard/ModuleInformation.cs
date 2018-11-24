@@ -30,6 +30,11 @@ namespace NightlyCode.Modules {
         public string TypeName => Type.Name;
 
         /// <summary>
+        /// provider used to create type
+        /// </summary>
+        public Func<ModuleProvider, object> Provider { get; internal set; }
+
+        /// <summary>
         /// Returns a string that represents the current object.
         /// </summary>
         /// <returns>
