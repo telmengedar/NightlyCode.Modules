@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.8.19</Version>
+    <Version>0.8.20</Version>
     <Authors>Toni Gottschall</Authors>
     <Company>NightlyCode</Company>
     <Description>Simple Module Management allowing Projects to use modular approaches</Description>
@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NightlyCode.Core" Version="0.8.0" />
+    <PackageReference Include="NightlyCode.Core" Version="0.8.3" />
   </ItemGroup>
 
   <Target Name="PostPackNugetDeploy" AfterTargets="Pack" Condition="'$(Configuration)' == 'Release'">

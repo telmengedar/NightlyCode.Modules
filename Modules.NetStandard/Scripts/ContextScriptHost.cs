@@ -1,4 +1,5 @@
-﻿using NightlyCode.Core.Script;
+﻿using System.Linq;
+using NightlyCode.Core.Script;
 
 namespace NightlyCode.Modules.Scripts {
 
@@ -18,7 +19,13 @@ namespace NightlyCode.Modules.Scripts {
 
         /// <inheritdoc />
         public object GetHost(string name) {
-            return context.GetModuleByKey<object>(name);
+            name = name.ToLower();
+            if(context.TryGetModuleByKey(name, out object module))
+                return module;
+            ModuleInformation moduleinfo = context.Modules.FirstOrDefault(m => m.TypeName.ToLower() == name);
+            if(moduleinfo == null)
+                throw new ModuleNotFoundException($"There is no module with key or typename '{name}'");
+            return context.GetModule(moduleinfo.Type);
         }
     }
 }

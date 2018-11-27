@@ -22,6 +22,15 @@ namespace NightlyCode.Modules {
         T GetModuleByKey<T>(string key);
 
         /// <summary>
+        /// tries to get a module by its module key
+        /// </summary>
+        /// <typeparam name="T">type of module to return</typeparam>
+        /// <param name="key">key of module</param>
+        /// <param name="module">returned module</param>
+        /// <returns>true if module is found, false otherwise</returns>
+        bool TryGetModuleByKey<T>(string key, out T module);
+
+        /// <summary>
         /// get module from context
         /// </summary>
         /// <typeparam name="T">type of module</typeparam>

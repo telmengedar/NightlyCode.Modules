@@ -1,5 +1,7 @@
 ﻿using Modules.Tests.Modules;
+using NightlyCode.Core.Script;
 using NightlyCode.Modules;
+using NightlyCode.Modules.Scripts;
 using NUnit.Framework;
 
 namespace Modules.Tests {
@@ -13,7 +15,9 @@ namespace Modules.Tests {
             modulemanager.AddModule<TestCallModule>();
             modulemanager.Start();
 
-            modulemanager.ExecuteCommand("testcall.teststring=rudellopf");
+            ScriptParser parser = new ScriptParser(new ContextScriptHost(modulemanager));
+
+            parser.Parse("testcall.teststring=rudellopf").Execute();
             Assert.AreEqual("rudellopf", modulemanager.GetModule<TestCallModule>().TestString);
         }
 
@@ -24,7 +28,8 @@ namespace Modules.Tests {
             modulemanager.AddModule<TestCallModule>();
             modulemanager.Start();
 
-            modulemanager.ExecuteCommand("testcall.testint=822");
+            ScriptParser parser = new ScriptParser(new ContextScriptHost(modulemanager));
+            parser.Parse("testcall.testint=822").Execute();
             Assert.AreEqual(822, modulemanager.GetModule<TestCallModule>().TestInt);
         }
 
@@ -35,7 +40,8 @@ namespace Modules.Tests {
             modulemanager.AddModule<TestCallModule>();
             modulemanager.Start();
 
-            modulemanager.ExecuteCommand("testcall.testdouble=728.3");
+            ScriptParser parser = new ScriptParser(new ContextScriptHost(modulemanager));
+            parser.Parse("testcall.testdouble=728.3").Execute();
             Assert.AreEqual(728.3, modulemanager.GetModule<TestCallModule>().TestDouble);
         }
 
@@ -46,7 +52,8 @@ namespace Modules.Tests {
             modulemanager.AddModule<TestCallModule>();
             modulemanager.Start();
 
-            modulemanager.ExecuteCommand("testcall.testenum=primary");
+            ScriptParser parser = new ScriptParser(new ContextScriptHost(modulemanager));
+            parser.Parse("testcall.testenum=primary").Execute();
             Assert.AreEqual(TestEnum.Primary, modulemanager.GetModule<TestCallModule>().TestEnum);
         }
 
@@ -57,7 +64,8 @@ namespace Modules.Tests {
             modulemanager.AddModule<TestCallModule>();
             modulemanager.Start();
 
-            modulemanager.ExecuteCommand("testcall.testmethod()");
+            ScriptParser parser = new ScriptParser(new ContextScriptHost(modulemanager));
+            parser.Parse("testcall.testmethod()").Execute();
             Assert.AreEqual("TestMethod", modulemanager.GetModule<TestCallModule>().LastMethodCalled);
         }
 
@@ -68,7 +76,8 @@ namespace Modules.Tests {
             modulemanager.AddModule<TestCallModule>();
             modulemanager.Start();
 
-            modulemanager.ExecuteCommand("testcall.testmethod2(something)");
+            ScriptParser parser = new ScriptParser(new ContextScriptHost(modulemanager));
+            parser.Parse("testcall.testmethod2(something)").Execute();
             Assert.AreEqual("TestMethod2", modulemanager.GetModule<TestCallModule>().LastMethodCalled);
         }
 
@@ -79,7 +88,8 @@ namespace Modules.Tests {
             modulemanager.AddModule<TestCallModule>();
             modulemanager.Start();
 
-            modulemanager.ExecuteCommand("testcall.testmethod3(something,144,232.1)");
+            ScriptParser parser = new ScriptParser(new ContextScriptHost(modulemanager));
+            parser.Parse("testcall.testmethod3(something,144,232.1)").Execute();
             Assert.AreEqual("TestMethod3", modulemanager.GetModule<TestCallModule>().LastMethodCalled);
         }
     }

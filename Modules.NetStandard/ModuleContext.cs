@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using NightlyCode.Core.Conversion;
-using NightlyCode.Modules.Commands;
 using NightlyCode.Modules.Logging;
 
 namespace NightlyCode.Modules {
@@ -16,7 +13,6 @@ namespace NightlyCode.Modules {
         readonly Dictionary<Type, ModuleInformation> modules = new Dictionary<Type, ModuleInformation>();
         readonly Dictionary<string, ModuleInformation> modulekeylookup = new Dictionary<string, ModuleInformation>();
 
-        readonly CommandParser parser = new CommandParser();
         readonly ModuleProvider provider;
 
         /// <summary>
@@ -78,9 +74,22 @@ namespace NightlyCode.Modules {
         public T GetModuleByKey<T>(string key)
         {
             lock(modulelock) {
-                if(!modulekeylookup.TryGetValue(key, out ModuleInformation module))
+                if(!TryGetModuleByKey(key, out T module))
                     throw new ModuleNotFoundException($"Module with key '{key}' was not found");
-                return (T)provider.Get(module.Type);
+                return module;
+            }
+        }
+
+        /// <inheritdoc />
+        public bool TryGetModuleByKey<T>(string key, out T module) {
+            lock (modulelock)
+            {
+                if(!modulekeylookup.TryGetValue(key, out ModuleInformation moduleinfo)) {
+                    module = default(T);
+                    return false;
+                }
+                module=(T)provider.Get(moduleinfo.Type);
+                return true;
             }
         }
 
@@ -157,43 +166,6 @@ namespace NightlyCode.Modules {
         public void ExecuteCommand(string modulekey, string command, params string[] arguments) {
             ICommandModule module = GetModuleByKey<ICommandModule>(modulekey);
             module.ProcessCommand(command, arguments);
-        }
-
-        /// <summary>
-        /// executes a command for a module
-        /// </summary>
-        /// <param name="commandstring">string which defines the command</param>
-        public bool ExecuteCommand(string commandstring) {
-            ModuleCommand command = parser.ParseCommand(commandstring);
-            if(command.Type == CommandType.None)
-                return false;
-
-            object module = GetModuleByKey<object>(command.Module);
-            switch(command.Type) {
-                case CommandType.Property:
-                    PropertyInfo property=module.GetType().GetProperties().First(p => p.Name.ToLower() == command.Endpoint.ToLower());
-                    property.SetValue(module, Converter.Convert(command.Arguments[0], property.PropertyType));
-                    return true;
-                case CommandType.Method:
-                    MethodInfo[] methods = module.GetType().GetMethods().Where(m => m.Name.ToLower() == command.Endpoint.ToLower() && m.GetParameters().Length == command.Arguments.Length).ToArray();
-                    foreach(MethodInfo method in methods) {
-                        try {
-                            int index = 0;
-                            ParameterInfo[] parameter = method.GetParameters();
-                             method.Invoke(module, command.Arguments.Select(c => {
-                                object value = Converter.Convert(command.Arguments[index], parameter[index].ParameterType);
-                                ++index;
-                                return value;
-                            }).ToArray());
-                            return true;
-                        }
-                        catch(Exception) {
-                        }
-                    }
-                    throw new ModuleCommandException("No matching method found to call");
-                default:
-                    throw new ModuleCommandException($"Unknown command type '{command.Type}'");
-            }
         }
 
         /// <summary>
