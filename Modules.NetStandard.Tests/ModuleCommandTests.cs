@@ -1,7 +1,7 @@
 ﻿using Modules.Tests.Modules;
-using NightlyCode.Core.Script;
 using NightlyCode.Modules;
 using NightlyCode.Modules.Scripts;
+using NightlyCode.Scripting;
 using NUnit.Framework;
 
 namespace Modules.Tests {

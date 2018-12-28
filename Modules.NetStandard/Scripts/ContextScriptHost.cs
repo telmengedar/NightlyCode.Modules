@@ -1,5 +1,8 @@
-﻿using System.Linq;
-using NightlyCode.Core.Script;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using NightlyCode.Scripting;
 
 namespace NightlyCode.Modules.Scripts {
 
@@ -26,6 +29,14 @@ namespace NightlyCode.Modules.Scripts {
             if(moduleinfo == null)
                 throw new ModuleNotFoundException($"There is no module with key or typename '{name}'");
             return context.GetModule(moduleinfo.Type);
+        }
+
+        public bool ContainsHost(string name) {
+            return context.Modules.Any(m => m.Key == name || m.TypeName.ToLower() == name);
+        }
+
+        public IEnumerable<MethodInfo> GetExtensions(Type host) {
+            yield break;
         }
     }
 }
