@@ -3,21 +3,29 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.8.25</Version>
+    <Version>0.8.25-preview</Version>
     <Authors>Toni Gottschall</Authors>
     <Company>NightlyCode</Company>
     <Description>Simple Module Management allowing Projects to use modular approaches</Description>
     <Copyright>Toni Gottschall</Copyright>
-    <PackageLicenseUrl>http://unlicense.org/</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/telmengedar/NightlyCode.Modules</PackageProjectUrl>
     <RepositoryUrl>https://github.com/telmengedar/NightlyCode.Modules</RepositoryUrl>
     <PackageTags>module, plugin, dependency, injection</PackageTags>
     <AssemblyName>NightlyCode.Modules</AssemblyName>
     <RootNamespace>NightlyCode.Modules</RootNamespace>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NightlyCode.Core" Version="0.8.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
   <Target Name="PostPackNugetDeploy" AfterTargets="Pack" Condition="'$(Configuration)' == 'Release'">
